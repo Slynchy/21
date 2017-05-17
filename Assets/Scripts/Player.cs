@@ -6,15 +6,169 @@ using UnityEngine.Networking;
 
 public class Player : NetworkBehaviour
 {
-    GameMaster.PLAYERS PLAYER;
+    public GameMaster.PLAYERS PLAYER;
     public GameObject CardPrefab;
 
     public List<GameObject> Hand;
 
+    public List<Sprite> cardSprites;
+    public List<Sprite> trumpCardSprites;
+
+    bool revealedUI = false;
+
+    public override void OnStartServer()
+    {
+        //if (GameMaster.numOfPlayers == 1)
+        //    PLAYER = GameMaster.PLAYERS.P1;
+        //else if (GameMaster.numOfPlayers == 2)
+        //    PLAYER = GameMaster.PLAYERS.P2;
+    }
+
+    private void Awake()
+    {
+        cardSprites = new List<Sprite>();
+        for (int i = 0; i < 12; i++)
+        {
+            cardSprites.Add(Resources.Load<Sprite>(i.ToString()) as Sprite);
+        }
+
+        for (int i = 0; i < (int)SyncListTest.TrumpCards.NUM_OF_TRUMP_CARDS; i++)
+        {
+            trumpCardSprites.Add(Resources.Load<Sprite>("TrumpCards/" + i.ToString()) as Sprite);
+        }
+    }
+
     void Start()
     {
-        this.transform.SetParent(GameMaster.CANVAS.transform);
-        this.transform.localScale = new Vector3(1, 1, 1);
+        //this.transform.SetParent(GameObject.Find("Canvas").GetComponent<Canvas>().transform);
+        //this.transform.localScale = new Vector3(1, 1, 1);
+        //GameMaster.HideCards();
+    }
+
+    [Command]
+    public void CmdSetState(SyncListTest.State _state, GameMaster.PLAYERS _player)
+    {
+        SyncListTest temp = GameObject.Find("GameVars").GetComponent<SyncListTest>();
+        switch (_player)
+        {
+            case GameMaster.PLAYERS.P1:
+                temp.P1_STATE = _state;
+                break;
+            case GameMaster.PLAYERS.P2:
+                temp.P2_STATE = _state;
+                break;
+        }
+    }
+
+    void UpdateUI()
+    {
+        SyncListTest temp = GameObject.Find("GameVars").GetComponent<SyncListTest>();
+        GameObject[] tempGO = GameObject.FindGameObjectsWithTag("PlayerCard");//P1
+        for (int i = 0; i < temp.P1Hand.Count; i++)
+        {
+            tempGO[i].GetComponent<Image>().color = Color.white;
+            if ((i == 0 && PLAYER != GameMaster.PLAYERS.P1) && temp.RevealCards == false) { }
+            else
+                tempGO[i].GetComponent<Image>().sprite = cardSprites[temp.P1Hand[i]];
+        }
+        tempGO = null;
+        tempGO = GameObject.FindGameObjectsWithTag("OppCard");//P2
+        for (int i = 0; i < temp.P2Hand.Count; i++)
+        {
+            tempGO[i].GetComponent<Image>().color = Color.white;
+            if ((i == 0 && PLAYER != GameMaster.PLAYERS.P2) && temp.RevealCards == false) { /* do nothing */ } 
+            else
+                tempGO[i].GetComponent<Image>().sprite = cardSprites[temp.P2Hand[i]];
+        }
+        if (temp.currentTurn == PLAYER)
+        {
+            GameObject.Find("CurrentTurn").GetComponent<Text>().text = "Turn: Yours";
+            GameObject.Find("CurrentTurn").GetComponent<Text>().color = new Color(0,1,0, GameObject.Find("CurrentTurn").GetComponent<Text>().color.a);
+        }
+        else
+        {
+            GameObject.Find("CurrentTurn").GetComponent<Text>().text = "Turn: Theirs";
+            GameObject.Find("CurrentTurn").GetComponent<Text>().color = new Color(1, 0, 0, GameObject.Find("CurrentTurn").GetComponent<Text>().color.a);
+        }
+
+        int totalScore = 0;
+        foreach (var score in temp.P1Hand)
+        {
+            totalScore += score;
+        }
+        if ((PLAYER == GameMaster.PLAYERS.P2 && temp.P1Hand.Count > 0) && temp.RevealCards == false) totalScore -= temp.P1Hand[0];
+        GameObject.Find("21CounterPlayer").GetComponent<Text>().text = totalScore.ToString() + " / " + "21";
+        totalScore = 0;
+        foreach (var score in temp.P2Hand)
+        {
+            totalScore += score;
+        }
+        if ((PLAYER == GameMaster.PLAYERS.P1 && temp.P2Hand.Count > 0) && temp.RevealCards == false) totalScore -= temp.P2Hand[0];
+        GameObject.Find("21CounterOpp").GetComponent<Text>().text = totalScore.ToString() + " / " + "21";
+
+        GameObject.Find("P1Coconuts").GetComponent<Text>().text = temp.P1Coconuts.ToString() + " Coconuts";
+        GameObject.Find("P2Coconuts").GetComponent<Text>().text = temp.P2Coconuts.ToString() + " Coconuts";
+
+        switch(temp.P1_STATE)
+        {
+            case SyncListTest.State.STICKING:
+                GameObject.Find("StickingWaitingPlayingP1").GetComponent<Text>().text = "Sticking...";
+                GameObject.Find("StickingWaitingPlayingP1").GetComponent<Text>().color = Color.yellow;
+                break;
+            case SyncListTest.State.PLAYING:
+                GameObject.Find("StickingWaitingPlayingP1").GetComponent<Text>().text = "Playing...";
+                GameObject.Find("StickingWaitingPlayingP1").GetComponent<Text>().color = Color.green;
+                break;
+            case SyncListTest.State.IDLE:
+                GameObject.Find("StickingWaitingPlayingP1").GetComponent<Text>().text = "Waiting...";
+                GameObject.Find("StickingWaitingPlayingP1").GetComponent<Text>().color = Color.red;
+                break;
+            case SyncListTest.State.WON:
+                GameObject.Find("StickingWaitingPlayingP1").GetComponent<Text>().text = "WON!";
+                GameObject.Find("StickingWaitingPlayingP1").GetComponent<Text>().color = Color.green;
+                break;
+            case SyncListTest.State.LOST:
+                GameObject.Find("StickingWaitingPlayingP1").GetComponent<Text>().text = "LOST!";
+                GameObject.Find("StickingWaitingPlayingP1").GetComponent<Text>().color = Color.red;
+                break;
+        }
+        switch (temp.P2_STATE)
+        {
+            case SyncListTest.State.STICKING:
+                GameObject.Find("StickingWaitingPlayingP2").GetComponent<Text>().text = "Sticking...";
+                GameObject.Find("StickingWaitingPlayingP2").GetComponent<Text>().color = Color.yellow;
+                break;
+            case SyncListTest.State.PLAYING:
+                GameObject.Find("StickingWaitingPlayingP2").GetComponent<Text>().text = "Playing...";
+                GameObject.Find("StickingWaitingPlayingP2").GetComponent<Text>().color = Color.green;
+                break;
+            case SyncListTest.State.IDLE:
+                GameObject.Find("StickingWaitingPlayingP2").GetComponent<Text>().text = "Waiting...";
+                GameObject.Find("StickingWaitingPlayingP2").GetComponent<Text>().color = Color.red;
+                break;
+            case SyncListTest.State.WON:
+                GameObject.Find("StickingWaitingPlayingP2").GetComponent<Text>().text = "WON!";
+                GameObject.Find("StickingWaitingPlayingP2").GetComponent<Text>().color = Color.green;
+                break;
+            case SyncListTest.State.LOST:
+                GameObject.Find("StickingWaitingPlayingP2").GetComponent<Text>().text = "LOST!";
+                GameObject.Find("StickingWaitingPlayingP2").GetComponent<Text>().color = Color.red;
+                break;
+        }
+    }
+
+    [Command]
+    void CmdReadyUp(GameMaster.PLAYERS _player)
+    {
+        SyncListTest temp = GameObject.Find("GameVars").GetComponent<SyncListTest>();
+        if (_player == GameMaster.PLAYERS.P1)
+        {
+            temp.P1Ready = true;
+        }
+        else
+        {
+            temp.P2Ready = true;
+        }
     }
 
     void Update()
@@ -23,45 +177,150 @@ public class Player : NetworkBehaviour
         {
             return;
         }
-        
 
+        UpdateUI();
+
+        SyncListTest temp = GameObject.Find("GameVars").GetComponent<SyncListTest>();
+        if (revealedUI == false)
+        {
+            RevealUI();
+        }
+
+        if(Input.GetKeyDown(KeyCode.Space))
+        {
+            CmdReadyUp(PLAYER);
+        }
+
+        if (PLAYER != temp.currentTurn) return;
+
+        if(Input.GetKeyDown(KeyCode.Alpha1))
+        {
+            CmdHit();
+        }
+        if (Input.GetKeyDown(KeyCode.Alpha2))
+        {
+            CmdSetState(SyncListTest.State.STICKING, PLAYER);
+            CmdFinishTurn(PLAYER);
+        }
+    }
+
+    void RevealUI()
+    {
+        GameObject.Find("21CounterOpp").GetComponent<Text>().color = Color.white;
+        GameObject.Find("21CounterPlayer").GetComponent<Text>().color = Color.white;
+        GameObject.Find("HelpText").GetComponent<Text>().color = Color.white;
+        GameObject.Find("CurrentTurn").GetComponent<Text>().color = Color.white;
+        GameObject.Find("P1Coconuts").GetComponent<Text>().color = Color.white;
+        GameObject.Find("P2Coconuts").GetComponent<Text>().color = Color.white;
+        GameObject.Find("StickingWaitingPlayingP1").GetComponent<Text>().color = Color.white;
+        GameObject.Find("StickingWaitingPlayingP2").GetComponent<Text>().color = Color.white;
+        revealedUI = true;
+    }
+    
+    void HideUI()
+    {
+        Color hidden = new Color(255, 255, 255, 0);
+        GameObject.Find("21CounterOpp").GetComponent<Text>().color = hidden;
+        GameObject.Find("21CounterPlayer").GetComponent<Text>().color = hidden;
+        GameObject.Find("HelpText").GetComponent<Text>().color = hidden;
+        GameObject.Find("CurrentTurn").GetComponent<Text>().color = hidden;
+        GameObject.Find("P1Coconuts").GetComponent<Text>().color = hidden;
+        GameObject.Find("P2Coconuts").GetComponent<Text>().color = hidden;
+        GameObject.Find("StickingWaitingPlayingP1").GetComponent<Text>().color = hidden;
+        GameObject.Find("StickingWaitingPlayingP2").GetComponent<Text>().color = hidden;
+        revealedUI = false;
+    }
+
+    [Command]
+    public void CmdFinishTurn(GameMaster.PLAYERS _player)
+    {
+        SyncListTest temp = GameObject.Find("GameVars").GetComponent<SyncListTest>();
+        if (temp.currentTurn == GameMaster.PLAYERS.P1)
+        {
+            temp.currentTurn = GameMaster.PLAYERS.P2;
+        }
+        else
+        {
+            temp.currentTurn = GameMaster.PLAYERS.P1;
+        }
+
+        if (temp.P1_STATE == SyncListTest.State.STICKING && temp.P2_STATE == SyncListTest.State.STICKING)
+        {
+            GameObject.Find("GameMaster").GetComponent<GameMaster>().STATE = GameMaster.GAMESTATES.ENDING;
+            return;
+        }
+
+        if (temp.currentTurn == GameMaster.PLAYERS.P1)
+        {
+            temp.P1_STATE = SyncListTest.State.PLAYING;
+        }
+        else
+        {
+            temp.P2_STATE = SyncListTest.State.PLAYING;
+        }
+    }
+
+    void OnDisconnectedFromServer(NetworkDisconnection info)
+    {
+        Debug.Log("Disconnected from server: " + info);
+    }
+
+    [Command]
+    public void CmdHit()
+    {
+        SyncListTest temp = GameObject.Find("GameVars").GetComponent<SyncListTest>();
+        if (temp.Deck.Count == 0)
+        {
+            Debug.Log("Cannot draw card; deck empty!");
+        }
+        if(temp.currentTurn == GameMaster.PLAYERS.P1)
+        {
+            temp.P1Hand.Add(temp.Deck[0]);
+            temp.Deck.RemoveAt(0);
+            temp.currentTurn = GameMaster.PLAYERS.P2;
+        }
+        else
+        {
+            temp.P2Hand.Add(temp.Deck[0]);
+            temp.Deck.RemoveAt(0);
+            temp.currentTurn = GameMaster.PLAYERS.P1;
+        }
+        GameObject.Find("GameVars").GetComponent<SyncListTest>().RpcUpdateUI();
     }
 
     public override void OnStartLocalPlayer()
     {
-        GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
-        if (players.Length % 2 == 1)
-            PLAYER = GameMaster.PLAYERS.P1;
-        else
-            PLAYER = GameMaster.PLAYERS.P2;
-
-        Hand = new List<GameObject>();
-        Hand.Add(GameObject.Instantiate<GameObject>(CardPrefab, GameMaster.CANVAS.transform));
-        Hand[0].GetComponent<Card>().player = Network.player.guid;
-
-        if(PLAYER == GameMaster.PLAYERS.P1)
+        //GameObject[] players;
+        //if (PLAYER == GameMaster.PLAYERS.P1)
+        //{
+        //    players = GameObject.FindGameObjectsWithTag("PlayerCard");
+        //    Hand = new List<GameObject>();
+        //    for (int i = 0; i < players.Length; i++)
+        //    {
+        //        Hand.Add(players[i]);
+        //        Hand[Hand.Count-1].GetComponent<Card>().player = Network.player.guid;
+        //    }
+        //}
+        //else
+        //{
+        //    players = GameObject.FindGameObjectsWithTag("OppCard");
+        //    Hand = new List<GameObject>();
+        //    for (int i = 0; i < players.Length; i++)
+        //    {
+        //        Hand.Add(players[i]);
+        //        Hand[Hand.Count - 1].GetComponent<Card>().player = Network.player.guid;
+        //    }
+        //}
+        SyncListTest temp = GameObject.Find("GameVars").GetComponent<SyncListTest>();
+        if (temp.numOfPlayers <= 1)
         {
-            Hand[0].GetComponent<RectTransform>().anchorMin.Set(0, 0);
-            Hand[0].GetComponent<RectTransform>().anchorMax.Set(0, 0);
-
-            foreach (GameObject card in Hand)
-            {
-                card.GetComponent<Image>().color = Color.green;
-                card.GetComponentInChildren<Text>().text = "P1";
-            }
+            PLAYER = GameMaster.PLAYERS.P1;
+            temp.P1_STATE = SyncListTest.State.IDLE;
         }
         else
         {
-            Hand[0].GetComponent<RectTransform>().anchorMin.Set(0, 1);
-            Hand[0].GetComponent<RectTransform>().anchorMax.Set(0, 1);
-            Hand[0].GetComponent<RectTransform>().offsetMin.Set(75, -75);
-            Hand[0].GetComponent<RectTransform>().offsetMax.Set(75, -75);
-
-            foreach (GameObject card in Hand)
-            {
-                card.GetComponent<Image>().color = Color.red;
-                card.GetComponentInChildren<Text>().text = "P2";
-            }
+            PLAYER = GameMaster.PLAYERS.P2;
+            temp.P2_STATE = SyncListTest.State.IDLE;
         }
     }
 }
