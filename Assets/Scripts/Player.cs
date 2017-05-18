@@ -341,9 +341,22 @@ public class Player : NetworkBehaviour
     }
 
     [Command]
-    public void CmdPlayTrumpCard(int trump, GameMaster.PLAYERS player)
+    public void CmdPlayTrumpCard(int which, GameMaster.PLAYERS player)
     {
         SyncListTest temp = GameObject.Find("GameVars").GetComponent<SyncListTest>();
+        int trump = 0;
+        if (player == GameMaster.PLAYERS.P1)
+        {
+            temp.P1TrumpsINPLAY[which] = temp.P1Trumps[which];
+            temp.P1Trumps[which] = (int)SyncListTest.TrumpCards.NONE;
+            trump = temp.P1TrumpsINPLAY[which];
+        }
+        else
+        {
+            temp.P2TrumpsINPLAY[which] = temp.P2Trumps[which];
+            temp.P2Trumps[which] = (int)SyncListTest.TrumpCards.NONE;
+            trump = temp.P2TrumpsINPLAY[which];
+        }
         switch (trump)
         {
             case (int)SyncListTest.TrumpCards.BET_UP_1:
@@ -353,10 +366,51 @@ public class Player : NetworkBehaviour
                 }
                 else
                 {
-
+                    temp.P1Bet += 1;
                 }
                 break;
-            case (int)SyncListTest.TrumpCards.GO_FOR_24:
+            case (int)SyncListTest.TrumpCards.SHIELD:
+                if (player == GameMaster.PLAYERS.P1)
+                {
+                    temp.P1Bet -= 1;
+                    if (temp.P1Bet < 0) temp.P1Bet = 0;
+                }
+                else
+                {
+                    temp.P2Bet -= 1;
+                    if (temp.P2Bet < 0) temp.P2Bet = 0;
+                }
+                break;
+            case (int)SyncListTest.TrumpCards.CARD1:
+            case (int)SyncListTest.TrumpCards.CARD2:
+            case (int)SyncListTest.TrumpCards.CARD3:
+            case (int)SyncListTest.TrumpCards.CARD4:
+            case (int)SyncListTest.TrumpCards.CARD5:
+            case (int)SyncListTest.TrumpCards.CARD6:
+            case (int)SyncListTest.TrumpCards.CARD7:
+            case (int)SyncListTest.TrumpCards.CARD8:
+            case (int)SyncListTest.TrumpCards.CARD9:
+            case (int)SyncListTest.TrumpCards.CARD10:
+            case (int)SyncListTest.TrumpCards.CARD11:
+                int card = trump - 2;
+                // find card in deck
+                for (int i = 0; i < temp.Deck.Count; i++)
+                {
+                    if(temp.Deck[i] == card)
+                    {
+                        if(player == GameMaster.PLAYERS.P1)
+                        {
+                            temp.P1Hand.Add(card);
+                            temp.Deck.RemoveAt(i);
+                        }
+                        else
+                        {
+                            temp.P2Hand.Add(card);
+                            temp.Deck.RemoveAt(i);
+                        }
+                        break;
+                    }
+                }
                 break;
         }
     }
@@ -373,9 +427,7 @@ public class Player : NetworkBehaviour
                 tempMsg.GetComponentInChildren<Text>().text = "Cannot trump!\n\nYou don't have one!";
                 return;
             }
-            temp.P1TrumpsINPLAY[which] = temp.P1Trumps[which];
-            temp.P1Trumps[which] = (int)SyncListTest.TrumpCards.NONE;
-            CmdPlayTrumpCard(temp.P1TrumpsINPLAY[which], PLAYER);
+            CmdPlayTrumpCard(which, PLAYER);
         }
         else
         {
@@ -386,9 +438,7 @@ public class Player : NetworkBehaviour
                 tempMsg.GetComponentInChildren<Text>().text = "Cannot trump!\n\nYou don't have one!";
                 return;
             }
-            temp.P2TrumpsINPLAY[which] = temp.P2Trumps[which];
-            temp.P2Trumps[which] = (int)SyncListTest.TrumpCards.NONE;
-            CmdPlayTrumpCard(temp.P2TrumpsINPLAY[which], PLAYER);
+            CmdPlayTrumpCard(which, PLAYER);
         }
     }
     

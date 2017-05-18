@@ -73,6 +73,67 @@ public class GameMaster : NetworkBehaviour
         }
     }
 
+    void DealTrumpCards()
+    {
+        int card = Random.Range(
+            (int)1, (int)SyncListTest.TrumpCards.NUM_OF_TRUMP_CARDS-1
+        );
+        if (GAMEVARS.P1Trumps[0] == 0)
+        {
+            // empty slot
+            GAMEVARS.P1Trumps[0] = card;
+        }
+        else
+        {
+            if (GAMEVARS.P1Trumps[1] == 0)
+            {
+                // empty slot
+                GAMEVARS.P1Trumps[1] = card;
+            }
+            else
+            {
+                if (GAMEVARS.P1Trumps[2] == 0)
+                {
+                    // empty slot
+                    GAMEVARS.P1Trumps[2] = card;
+                }
+                else
+                {
+                    // Can't give card!
+                }
+            }
+        }
+
+        card = Random.Range(
+            (int)1, (int)SyncListTest.TrumpCards.NUM_OF_TRUMP_CARDS - 1
+        );
+        if (GAMEVARS.P2Trumps[0] == 0)
+        {
+            // empty slot
+            GAMEVARS.P2Trumps[0] = card;
+        }
+        else
+        {
+            if (GAMEVARS.P2Trumps[1] == 0)
+            {
+                // empty slot
+                GAMEVARS.P2Trumps[1] = card;
+            }
+            else
+            {
+                if (GAMEVARS.P2Trumps[2] == 0)
+                {
+                    // empty slot
+                    GAMEVARS.P2Trumps[2] = card;
+                }
+                else
+                {
+                    // Can't give card!
+                }
+            }
+        }
+    }
+
     private void Update()
     {
         if (!isServer) return;
@@ -93,6 +154,7 @@ public class GameMaster : NetworkBehaviour
             case GAMESTATES.STARTING:
                 GAMEVARS.P1_STATE = SyncListTest.State.IDLE;
                 GAMEVARS.P2_STATE = SyncListTest.State.IDLE;
+                DealTrumpCards();
                 GAMEVARS.P1Hand.Add(GAMEVARS.Deck[0]);
                 GAMEVARS.Deck.RemoveAt(0);
                 GAMEVARS.P2Hand.Add(GAMEVARS.Deck[0]);
@@ -212,6 +274,14 @@ public class GameMaster : NetworkBehaviour
                     timer = 0;
                     GAMEVARS.P1Hand.Clear();
                     GAMEVARS.P2Hand.Clear();
+                    GAMEVARS.P1Bet = 1;
+                    GAMEVARS.P2Bet = 1;
+                    GAMEVARS.P1TrumpsINPLAY[0] = 0;
+                    GAMEVARS.P1TrumpsINPLAY[1] = 0;
+                    GAMEVARS.P1TrumpsINPLAY[2] = 0;
+                    GAMEVARS.P2TrumpsINPLAY[0] = 0;
+                    GAMEVARS.P2TrumpsINPLAY[1] = 0;
+                    GAMEVARS.P2TrumpsINPLAY[2] = 0;
                     GAMEVARS.Deck.Clear();
                     GAMEVARS.P1_STATE = SyncListTest.State.IDLE;
                     GAMEVARS.P2_STATE = SyncListTest.State.IDLE;

@@ -20,7 +20,18 @@ public class SyncListTest : NetworkBehaviour
     {
         NONE,
         BET_UP_1,
-        GO_FOR_24,
+        SHIELD,
+        CARD1,
+        CARD2,
+        CARD3,
+        CARD4,
+        CARD5,
+        CARD6,
+        CARD7,
+        CARD8,
+        CARD9,
+        CARD10,
+        CARD11,
         NUM_OF_TRUMP_CARDS
     }
 
@@ -146,8 +157,8 @@ public class SyncListTest : NetworkBehaviour
             Deck.Add(i);
         }
         GameMaster.ShuffleDeck(ref Deck);
-        P1Trumps.Add((int)TrumpCards.BET_UP_1);
-        P2Trumps.Add((int)TrumpCards.BET_UP_1);
+        P1Trumps.Add((int)TrumpCards.NONE);
+        P2Trumps.Add((int)TrumpCards.NONE);
         P1Trumps.Add((int)TrumpCards.NONE);
         P2Trumps.Add((int)TrumpCards.NONE);
         P1Trumps.Add((int)TrumpCards.NONE);
