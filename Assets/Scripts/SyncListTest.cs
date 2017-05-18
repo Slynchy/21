@@ -18,6 +18,7 @@ public class SyncListTest : NetworkBehaviour
 
     public enum TrumpCards
     {
+        NONE,
         BET_UP_1,
         GO_FOR_24,
         NUM_OF_TRUMP_CARDS
@@ -69,6 +70,12 @@ public class SyncListTest : NetworkBehaviour
 
     [SyncVar]
     public bool RevealCards = false;
+
+    [ClientRpc]
+    public void RpcCloseAllClients()
+    {
+        Application.Quit();
+    }
 
     [ClientRpc]
     public void RpcResetUI()
@@ -140,7 +147,17 @@ public class SyncListTest : NetworkBehaviour
         }
         GameMaster.ShuffleDeck(ref Deck);
         P1Trumps.Add((int)TrumpCards.BET_UP_1);
-        P2Trumps.Add((int)TrumpCards.GO_FOR_24);
+        P2Trumps.Add((int)TrumpCards.BET_UP_1);
+        P1Trumps.Add((int)TrumpCards.NONE);
+        P2Trumps.Add((int)TrumpCards.NONE);
+        P1Trumps.Add((int)TrumpCards.NONE);
+        P2Trumps.Add((int)TrumpCards.NONE);
+        P1TrumpsINPLAY.Add((int)TrumpCards.NONE);
+        P2TrumpsINPLAY.Add((int)TrumpCards.NONE);
+        P1TrumpsINPLAY.Add((int)TrumpCards.NONE);
+        P2TrumpsINPLAY.Add((int)TrumpCards.NONE);
+        P1TrumpsINPLAY.Add((int)TrumpCards.NONE);
+        P2TrumpsINPLAY.Add((int)TrumpCards.NONE);
     }
 
 }

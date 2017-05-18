@@ -198,6 +198,9 @@ public class GameMaster : NetworkBehaviour
                 GAMEVARS.RevealCards = true;
                 GAMEVARS.RpcHideTurn();
                 STATE = GAMESTATES.WAITING_FOR_READY;
+
+                if (GAMEVARS.P1Coconuts == 0 || GAMEVARS.P2Coconuts == 0)
+                    GAMEVARS.RpcCloseAllClients();
                 break;
             case GAMESTATES.WAITING_FOR_READY:
                 // if(GAMEVARS.P1Ready && GAMEVARS.P2Ready)
